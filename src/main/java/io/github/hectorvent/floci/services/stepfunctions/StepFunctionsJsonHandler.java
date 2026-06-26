@@ -18,6 +18,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @ApplicationScoped
 public class StepFunctionsJsonHandler {
@@ -36,6 +37,7 @@ public class StepFunctionsJsonHandler {
             case "CreateStateMachine" -> handleCreateStateMachine(request, region);
             case "DescribeStateMachine" -> handleDescribeStateMachine(request);
             case "ListStateMachines" -> handleListStateMachines(request, region);
+            case "ListStateMachineVersions" -> handleListStateMachineVersions(request, region);
             case "DeleteStateMachine" -> handleDeleteStateMachine(request);
             case "ValidateStateMachineDefinition" -> handleValidateStateMachineDefinition(request);
             case "StartExecution" -> handleStartExecution(request, region);
@@ -59,6 +61,20 @@ public class StepFunctionsJsonHandler {
                     .entity(new AwsErrorResponse("UnsupportedOperation", "Operation " + action + " is not supported."))
                     .build();
         };
+    }
+
+    private Response handleListStateMachineVersions(JsonNode request, String region) {
+        ObjectNode response = objectMapper.createObjectNode();
+        ArrayNode array = response.putArray("stateMachineVersions");
+        List<StateMachine> stateMachines = service.listStateMachines(region);
+        for (StateMachine sm : stateMachines) {
+            if (Objects.equals(sm.getStateMachineArn(), request.path("stateMachineArn").asText())) {
+                ObjectNode item = array.addObject();
+                item.put("creationDate", sm.getCreationDate());
+                item.put("stateMachineVersionArn", sm.getStateMachineArn());
+            }
+        }
+        return Response.ok(response).build();
     }
 
     private Response handleCreateStateMachine(JsonNode request, String region) {

@@ -63,19 +63,14 @@ public class StepFunctionsJsonHandler {
     }
 
     private Response handleListStateMachineVersions(JsonNode request) {
+        String arn = request.path("stateMachineArn").asText("");
+        if (arn.isEmpty()) {
+            return Response.status(400)
+                    .entity(new AwsErrorResponse("ValidationException", "stateMachineArn is required."))
+                    .build();
+        }
         ObjectNode response = objectMapper.createObjectNode();
-        ArrayNode array = response.putArray("stateMachineVersions");
-        StateMachine sm;
-        try{
-            sm = service.describeStateMachine(request.path("stateMachineArn").asText());
-        }catch (AwsException e){
-            return Response.ok(response).build();
-        }
-        if (sm != null) {
-            ObjectNode item = array.addObject();
-            item.put("creationDate", sm.getCreationDate());
-            item.put("stateMachineVersionArn", String.format("%s:1", sm.getStateMachineArn()));
-        }
+        response.putArray("stateMachineVersions");
         return Response.ok(response).build();
     }
 

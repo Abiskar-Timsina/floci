@@ -43,7 +43,7 @@ class StepFunctionsListStateMachineVersionsIntegrationTest {
 
     @Test
     @Order(2)
-    void listVersions_existingMachine_returns200() {
+    void listVersions_existingMachine_returns200WithEmptyList() {
         given()
                 .header("X-Amz-Target", TARGET)
                 .contentType(CT)
@@ -52,8 +52,7 @@ class StepFunctionsListStateMachineVersionsIntegrationTest {
                 .then()
                 .statusCode(200)
                 .body("stateMachineVersions", notNullValue())
-                .body("stateMachineVersions[0].stateMachineVersionArn", equalTo(stateMachineArn + ":1"))
-                .body("stateMachineVersions[0].creationDate", notNullValue());
+                .body("stateMachineVersions", hasSize(0));
     }
 
     @Test
@@ -71,15 +70,15 @@ class StepFunctionsListStateMachineVersionsIntegrationTest {
 
     @Test
     @Order(4)
-    void listVersions_missingArn_returns200WithEmptyArray() {
+    void listVersions_missingArn_returns400ValidationException() {
         given()
                 .header("X-Amz-Target", TARGET)
                 .contentType(CT)
                 .body("{}")
                 .when().post("/")
                 .then()
-                .statusCode(200)
-                .body("stateMachineVersions", hasSize(0));
+                .statusCode(400)
+                .body("__type", containsString("ValidationException"));
     }
 
     @Test
